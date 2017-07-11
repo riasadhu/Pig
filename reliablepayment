@@ -1,0 +1,48 @@
+ques find the users having reliable payment(average success rate >100)
+
+loadfile = Load '/home/hduser/weblog' using PigStorage('\t') as (user,payment,time:double);
+
+(john,citibank,19.0)
+(john,hsbc bank,19.05)
+(john,sc bank,17.0)
+(john,abc bank,17.05)
+(rita,sc bank,11.05)
+(rita,abc bank,11.0)
+
+loadfile1 = Load '/home/hduser/gateway' using PigStorage('\t') AS (payment,successrate:double);
+(citibank,95.0)
+(hsbc bank,95.0)
+(sc bank,92.0)
+(abc bank,85.0)
+
+joinable = join loadfile by $1,loadfile1 by $0; 
+(rita,sc bank,11.05,sc bank,92.0)
+(john,sc bank,17.0,sc bank,92.0)
+(rita,abc bank,11.0,abc bank,85.0)
+(john,abc bank,17.05,abc bank,85.0)
+(john,citibank,19.0,citibank,95.0)
+(john,hsbc bank,19.05,hsbc bank,95.0)
+(john,{(john,hsbc bank,95.0),(john,citibank,95.0),(john,abc bank,85.0),(john,sc bank,92.0)})
+(rita,{(rita,abc bank,85.0),(rita,sc bank,92.0)})
+grunt> describe grouping;
+grouping: {group: bytearray,filtering: {(loadfile::user: bytearray,loadfile::payment: bytearray,loadfile1::successrate: double)}}
+
+
+filtering = foreach joinable generate $0,$1,$4;
+(rita,sc bank,92.0)
+(john,sc bank,92.0)
+(rita,abc bank,85.0)
+(john,abc bank,85.0)
+(john,citibank,95.0)
+(john,hsbc bank,95.0)
+
+grunt> grouping = group filtering by loadfile::user;
+grunt> dump grouping;
+
+grunt> morethan90 = foreach grouping generate group,AVG(filtering.loadfile1::successrate);
+(john,91.75)
+(rita,88.5)
+filtering1 = filter morethan90 by $1 >90;
+
+(john,91.75)
+
