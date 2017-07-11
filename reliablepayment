@@ -1,4 +1,4 @@
-ques find the users having reliable payment(average success rate >100)
+ques) find the users having reliable payment(average success rate >100)
 
 loadfile = Load '/home/hduser/weblog' using PigStorage('\t') as (user,payment,time:double);
 
